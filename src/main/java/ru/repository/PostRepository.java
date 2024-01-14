@@ -12,34 +12,33 @@ import java.util.TreeMap;
 
 @Repository
 public class PostRepository {
-    private static final Long ID_0 = 0L;
+    private static final Boolean IS_REMOVED = false;
     private Long postId = 0L;
 
     private final Map<Long, Post> posts = Collections.synchronizedMap(new TreeMap<>());
 
     public List<Post> all() {
-        return posts.values().stream().toList();
+        return posts.values()
+                .stream()
+                .filter(post -> IS_REMOVED.equals(post.getIsRemoved()))
+                .toList();
     }
 
     public Optional<Post> getById(long id) {
         return Optional.of(posts.get(id));
     }
 
-    public synchronized Post save(Post post) throws IsExistException {
-
-        if (ID_0.equals(post.getId())) {
-            post = new Post(++postId, post.getContent());
-            posts.put(postId, post);
-            return post;
-        }
-        if (posts.containsKey(post.getId())) {
-            posts.put(post.getId(), post);
-            return post;
-        }
-        throw new IsExistException("Для создания/изменения неправильно указан id");
+    public synchronized Post create(Post post) throws IsExistException {
+        post = new Post(++postId, post.getContent());
+        posts.put(postId, post);
+        return post;
     }
 
-    public void removeById(long id) {
-        posts.remove(id);
+    public Post update(Post post) throws IsExistException {
+        return posts.put(post.getId(), post);
+    }
+
+    public void removeById(Post post) {
+        post.setIsRemoved();
     }
 }
